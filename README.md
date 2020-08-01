@@ -33,7 +33,22 @@ http://localhost:3002/
 
 ## File Architecture
 
+```
+code
+  │       app.js          # app 入口
+  └───routes           # route controllers
+          │       welcome.js          # home page
+          │       design.js         # database design
+  └───public/javascripts           # backend
+          │       design.js         # database design  
+  └───views           # rendering
+          │       welcome.jade          # home page
+          │       design.jade         # database design
+  └───public/data/code           # python
+```
+
 ## Procedure
-./db_operation/db.py -- 创建分布式数据库 [w]，数据导入 [w]，创建关系表 [w]，指定划分列 [w]，运行查询 [w]，获得表现 [w]
-./algorithm/ -- 动态规划(遍历所有可能组合) [w]，启发式（在列图上找最大生成树） [w]，图压缩 [w]
-./public/javascripts -- 通过网页上传算法输入 [w]，展示算法划分结果 [w]，动态展示划分后执行情况 [w]，数据分析 [w]
+- **./db_operation/db.py** -- 创建分布式数据库 [w]，数据导入 [w]，创建关系表 [w]，指定划分列 [w]，运行查询 [w]，获得表现 [w]
+- **./algorithm/** -- 动态规划(遍历所有可能组合) [w]，启发式（在列图上找最大生成树） [w]，图压缩 [w]
+- **./public/javascripts** -- 通过网页上传算法输入 [w]，展示算法划分结果 [w]，动态展示划分后执行情况 [w]，数据分析 [w]
+
