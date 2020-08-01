@@ -26,7 +26,6 @@ http://localhost:3002/
 ```
 
 ## Development
-- /DBAI_Algo/: 把demo需要的python代码写在这个文件夹里面
 - /views/: 前端html
 - /public/javascripts/： 编写js代码
 - /public/stylesheets/ ： 编写css样式
