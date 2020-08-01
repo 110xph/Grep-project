@@ -1,0 +1,472 @@
+extends layout
+
+block js
+    link(rel='stylesheet', href='https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css')
+    script(src='https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js')
+
+    script(src='/javascripts/design.js')
+
+
+block content
+    .page-header
+      script(src='https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js')
+      script(src='https://unpkg.com/feather-icons/dist/feather.min.js')
+      script(src = '/bootstrap/js/bootstrap-show-password.min.js')
+      script(src='https://cdn.bootcdn.net/ajax/libs/echarts/4.7.0/echarts-en.min.js')
+      script(src='/javascripts/dataTool.min.js')
+
+      link(rel='stylesheet', href='https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.css')
+      script(src='https://unpkg.com/bootstrap-table@1.16.0/dist/bootstrap-table.min.js')
+
+      h1
+        | Database Design
+      .row
+        .col-xs-8.col-sm-8.col-md-8
+          h5
+            i.
+              Intelligent Data Partition, Configuration Tuning, and Performance Prediction!
+        .col-xs-2.col-sm-2.col-md-2
+          button.btn.btn-secondary.btn-sm(data-toggle='modal', data-target='#myModal')
+            | 调参报告
+          //button(type='button', data-toggle='modal', data-target='#myModal') 报告
+          #myModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='myModalLabel', aria-hidden='true')
+              .modal-dialog
+                .modal-content
+                  .modal-header
+                    //button.close(type='button', data-dismiss='modal', aria-hidden='true')
+                    //  | ×
+                    h5#myModalLabel.modal-title
+                      | 调参报告
+                  .modal-body
+                    .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+                      .btn-toolbar.mb-3.mb-md-0
+                        .row
+                          .col-4
+                            label.col-form-label(for = 'pres_system_selector')
+                              |System:
+                          .col-8
+                            select.form-control.form-control-sm#dbms_instance_selector
+                              option Pg-XL
+                              option MySQL-Cluster
+                              option Spark
+                      .btn-toolbar.mb-3.mb-md-0
+                        .row
+                          .col-4
+                            label.col-form-label(for = 'pres_workload_selector')
+                               |Worklaod:
+                          .col-8
+                            select.form-control.form-control-sm#dbms_instance_selector
+                              option TPC-H
+                              option JOB
+                              option TPC-C
+                      //.btn-toolbar.mb-2.mb-md-0
+                        .row
+                          .col-4
+                            label.col-form-label(for = 'pres_metric_selector') Metric:
+                          .col-8
+                            select.form-control.form-control-sm#dbms_instance_selector
+                              option JExchange
+                              option Normalized-SD
+                              option Vertex-Cut
+
+                    .pres_vis_panel#pres_div
+                        //.performance_table
+                        table#partitionres
+                        script.
+                            //设置需要显示的列
+                            var columns = [
+                                {
+                                    field:"size",
+                                    title: 'Data Size'
+                                },
+                                {
+                                    field: 'rate',
+                                    title: 'Sample Rate'
+                                },
+                                {
+                                    field: 'throughput',
+                                    title: 'Throughput'
+                                },
+                                {
+                                    field: 'train',
+                                    title: 'Training Time'
+                                },
+                                {
+                                    field: 'adapt',
+                                    title: 'Adapt Time'
+                                }
+                            ];
+                            var data= [
+                                {
+                                    size: '1G',
+                                    rate: "0.1%",
+                                    throughput: '+72.60%/-9.39%',
+                                    train: 'na/-91.1%',
+                                    adapt: '2min'
+                                },
+                                {
+                                    size: "1G",
+                                    rate: "1.0%",
+                                    throughput: '+102.0%/-4.12%',
+                                    train: 'na/-90.2%',
+                                    adapt: '2.3min'
+                                },
+                                {
+                                    size: "1G",
+                                    rate: "10.0%",
+                                    throughput: '+98.30%/-7.41%',
+                                    train: 'na/-87.1%',
+                                    adapt: '3.1min'
+                                },
+                                {
+                                    size: '10G',
+                                    rate: "0.1%",
+                                    throughput: '+87.60%/-5.21%',
+                                    train: 'na/-87.3%',
+                                    adapt: '2.4min'
+                                },
+                                {
+                                    size: "10G",
+                                    rate: "1.0%",
+                                    throughput: '+94.30%/-4.38%',
+                                    train: 'na/-85.54%',
+                                    adapt: '3.26min'
+                                },
+
+                            ];
+
+                            $('#partitionres').bootstrapTable({
+                                toolbar:"#toolbar",
+                                data:data,
+                                columns: columns,
+                            });
+
+                  .modal-footer
+
+    script(type='text/javascript').
+      function loadXMLDoc(){
+      var xmlhttp;
+      if (window.XMLHttpRequest)
+      {// code for IE7+, Firefox, Chrome, Opera, Safari
+        xmlhttp=new XMLHttpRequest();
+      }
+      else
+      {// code for IE6, IE5
+        xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+      }
+      xmlhttp.onreadystatechange=function()
+      {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200)
+        {
+          document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+        }
+      }
+      xmlhttp.open("GET","/about/about",true);
+      xmlhttp.send();
+      }
+    //-button(type='button', onclick='ChangeEdge()') 改变边值
+    //#myDiv
+
+    br
+    .row
+      .col-xs-12.col-sm-12.col-md-12
+        .card
+          .card-body
+            .row
+                .d-flex.flex-column.col-md-3.col-3
+                  .card-deck
+                    .row
+                        .card.mb-4(style='width: 18rem;')
+                          button#demomenu.btn.btn-info(type='button', onclick='showDemo(this)')
+                            span(data-feather='calendar')
+                            |  Show Demo
+                            span.caret
+                          #demoInfo
+                    .row
+                        .card.mb-4(style='width: 18rem;')
+                          .card-header.text-center
+                            a(data-toggle='popover', title='选择划分方法', data-placement="top")
+                              h5
+                                | Partition Approach
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                                select.form-control.form-control-sm#dbms_instance_selector
+                                  option Encoder-Decoder
+                                  option Greedy Algorithm
+                                  option Reinformcement Learning
+                    .row
+                        .card.mb-4(style='width: 18rem;')
+                          .card-header.text-center
+                            a(data-toggle='popover', title='选择数据库集群', data-placement="top")
+                              h5
+                                | Load Your Servers!
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                                  #server_div.mb-4.mb-md-4
+                                    select.form-control.form-control-sm#db_arch_selector
+                                      option MPP
+                                      option Replica
+                                      option MPP+Replica
+
+                                  button#servermenu.btn.btn-outline-secondary.dropdown-toggle(type='button', data-toggle='dropdown')
+                                    span(data-feather='server')
+                                    |  --LOAD_SERVER--
+                                    span.caret
+                                  // graph nodes
+                                  ul.dropdown-menu(role='menu', aria-labelledby='servermenu')
+                                    li(role='presentation')
+                                      a(role='menuitem', tabindex='-1', href='#', onclick='showLocalServer(this)')
+                                        span(data-feather='server')
+                                        |  Cluster-Local
+                                  #serverInfo
+                    .row
+                        .card.mb-4(style='width: 18rem;')
+                          .card-header.text-center
+                            a(data-toggle='popover', title='选择数据表和采样方法', data-placement="top")
+                              h5
+                                | Sample Your Data!
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                              #sample_div.mb-4.mb-md-4
+                                select.form-control.form-control-sm#dbms_instance_selector
+                                  option Random Sampling
+                                  option Stratified Sampling
+                              #sample_div.mb-4.mb-md-4
+                                  button#rowsmenu.btn.btn-outline-secondary.dropdown-toggle(type='button', data-toggle='dropdown')
+                                    span(data-feather='calendar')
+                                    |  --LOAD_DATA--
+                                    span.caret
+                                  // graph nodes
+                                  ul.dropdown-menu(role='menu', aria-labelledby='rowsmenu')
+                                    li(role='presentation')
+                                      a(role='menuitem', tabindex='-1', href='#', onclick='showLocalData(this)')
+                                        span(data-feather='calendar')
+                                        |  TPCH-0.1x
+                                    //.dropdown-divider
+                                  #dataInfo
+                    .row
+                        .card.mb-4(style='width: 18rem;')
+                          .card-header.text-center
+                            a(data-toggle='popover', title='选择负载类型', data-placement="top")
+                              h5
+                                | Load Your Queries!
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                              #workload_drop_div.mb-4.mb-md-4
+                                  button#workloadmenu.btn.btn-outline-secondary.dropdown-toggle(type='button', data-toggle='dropdown')
+                                    span(data-feather='activity')
+                                    |  LOAD_WORKLOAD
+                                    span.caret
+                                  // graph nodes
+                                  ul.dropdown-menu(role='menu', aria-labelledby='workloadmenu')
+                                    li(role='presentation')
+                                      a(role='menuitem', tabindex='-1', href='#', onclick='showLocalWorkload(this)')
+                                        span(data-feather='activity')
+                                        |  TPC-H
+                                    .dropdown-divider
+                                    li(role='presentation')
+                                      a(role='menuitem', tabindex='-1', href='#', onclick='showLocalWorkload(this)')
+                                        span(data-feather='activity')
+                                        |  TPC-C
+                                    .dropdown-divider
+                                    li(role='presentation')
+                                      a(role='menuitem', tabindex='-1', href='#', onclick='showLocalWorkload(this)')
+                                        span(data-feather='activity')
+                                        |  JOB
+                                  #workloadInfo
+
+                .d-flex.flex-column.col-md-5.col-5
+                  .card-deck.col-md-5.col-5
+                    .row
+                        .card.mb-4(style='width: 30rem;')
+                          p
+                          #func_div.text-center
+                            .btn-toolbar.mb-4.mb-md-4
+                              .col-4
+                                label.col-form-label(for = 'designFunc')
+                                  h5
+                                    |Functions:
+                              .col-8
+                                select.form-control.form-control-sm#partitionselect(onchange='selectPartitionFunc(this)')
+                                  option Show Load State
+                                  option Show Performance
+                                  // option Manually Select Servers
+                                  option Show Partition Scheme
+                                  // option Reset
+                    .row
+                        .card.mb-4(style='width: 30rem;')
+                            span.border.border-danger
+                              .card-header.text-center
+                                h5
+                                    | Partition!
+                                h7
+                                    |(Node size denotes data scale)
+                              #partition_div.text-center
+                                #server_graph_chart
+                              #partition_div.text-center
+                                  .btn-toolbar.mb-4.mb-md-4
+                                      .col-4
+                                        button.btn.btn-primary(type='submit', onclick='ourPartition(this)') Simulate Partition
+                                      .col-4
+                                        button.btn.btn-primary(type='submit', onclick='commitDataset(this)') Start Partition
+                                      .col-4
+                                        button.btn.btn-primary(type='submit', onclick='ourPartition(this)') Reset Partition
+
+                    .row
+                        .card.mb-4(style='width: 30rem;')
+                          .card-header.text-center
+                            a(data-toggle='popover', title='单个节点的资源使用情况', data-placement="top")
+                              h5
+                                | Node Dashboard
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                                #node_info_div.col-md-16.col-16.text-center
+                                    //h5.text-muted Details of #Node02
+                                    h6
+                                      #nodelabel
+                                    .btn-toolbar.mb-4.mb-md-4
+                                      .col-4
+                                        label.col-form-label(for = 'diskFunc') Disk:
+                                      .col-8
+                                        .container
+                                          .progress
+                                            .progress-bar#diskbar(style='width:60%') 60%
+                                    .btn-toolbar.mb-4.mb-md-4
+                                      .col-4
+                                        label.col-form-label(for = 'cpuFunc') CPU:
+                                      .col-8
+                                        .container
+                                          .progress
+                                            .progress-bar#cpubar(style='width:60%') 60%
+                                    .btn-toolbar.mb-4.mb-md-4
+                                      .col-4
+                                        label.col-form-label(for = 'IOFunc') IO:
+                                      .col-8
+                                        .container
+                                          .progress
+                                            .progress-bar#iobar(style='width:60%') 60%
+
+                                    #tune_div.text-center
+                                       .btn-toolbar.mb-4.mb-md-4
+                                          .col-4
+                                            button.btn.btn-secondary(type='submit', onclick='starttune(this)') Tune Config
+                                            #tuneInfo
+                                          .col-4
+                                            button.btn.btn-secondary(type='submit', onclick='resettune(this)') Reset Config
+                                            #resetInfo
+                                          .col-4
+                                            button.btn.btn-secondary(data-toggle='modal', data-target='#tuneModal') Check Config
+                                            #tuneModal.modal.fade(tabindex='-1', role='dialog', aria-labelledby='tuneModalLabel', aria-hidden='true')
+                                                .modal-dialog
+                                                    .modal-content
+                                                        .modal-header
+                                                            //button.close(type='button', data-dismiss='modal', aria-hidden='true')
+                                                            //  | ×
+                                                            h5#tuneModalLabel.modal-title
+                                                                | 参数对比
+                                                        .modal-body
+                                                            .pres_vis_panel#tune_div
+                                                                //.performance_table
+                                                                table#tuner
+                                                                script.
+                                                                    //设置需要显示的列
+                                                                    var columns = [
+                                                                        {
+                                                                            field: "name",
+                                                                            title: "Name"
+                                                                        },
+                                                                        {
+                                                                            field: "before",
+                                                                            title: 'Before Tuning'
+                                                                        },
+                                                                        {
+                                                                            field: 'after',
+                                                                            title: 'After Tuning'
+                                                                        }
+                                                                    ];
+                                                                    var data = [
+                                                                        {
+                                                                            name: 'work_mem',
+                                                                            before: '4096 KB',
+                                                                            after: "6 GB",
+                                                                        },
+                                                                        {
+                                                                            name: "commit_delay",
+                                                                            before: "0",
+                                                                            after: "10",
+                                                                        },
+                                                                        {
+                                                                            name: 'deadlock_timeout',
+                                                                            before: '1000',
+                                                                            after: "10",
+                                                                        },
+                                                                        {
+                                                                            name: "lock_timeout",
+                                                                            before: "0",
+                                                                            after: "1 min",
+                                                                        },
+                                                                        {
+                                                                            name: "join_collapse_limit",
+                                                                            before: "8",
+                                                                            after: "4"
+                                                                        },
+                                                                        {
+                                                                            name: "max connections",
+                                                                            before: "8",
+                                                                            after: "1000"
+                                                                        }
+                                                                    ];
+
+                                                                    $('#tuner').bootstrapTable({
+                                                                        toolbar: "#toolbar",
+                                                                        data: data,
+                                                                        columns: columns,
+                                                                    });
+                                                        .modal-footer
+
+
+
+                .d-flex.flex-column.col-md-3.col-3
+                  .card-deck
+                    .row
+                        .card.mb-4(style='width: 25rem;')
+                          .card-header.text-center
+                            h5
+                              | Partiton Scheme
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                              #partitionscheme
+                    .row
+                        .card.mb-4(style='width: 25rem;')
+                          .card-header.text-center
+                            h5
+                              | Performance Monitoring
+                          ul.list-group.list-group-flush
+                            li.list-group-item
+                              #performance_div.text-center
+                                h5.text-muted Execution Latency (s)
+                                #trans_performance
+                                p
+                                h5.text-muted Execution Throughput (tps)
+                                #sq_performance
+                                p
+                                #performance_text
+
+    br
+    .row
+      .col-xs-12.col-sm-12.col-md-12
+            .row
+                //.d-flex.flex-column.col-md-3.col-3
+              .card-deck
+                .row
+                    .card.text-white.bg-warning(style='width: 81rem;')
+                      .card-header.text-center
+                        a(data-toggle='popover', title='前十条最慢的查询和它们在图上的结构特征', data-placement="top")
+                          h4
+                            | Query Performance Analysis (Top 10 Slow Queries with the local structure)
+                          #visual_title
+                      ul.list-group.list-group-flush
+                        li.list-group-item
+                            //.performance_table
+                            table#ptable
+                      input(type='button', value='Update Queries', onclick="addQueryRow()")

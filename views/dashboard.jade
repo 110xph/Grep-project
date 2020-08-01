@@ -1,0 +1,119 @@
+extends layout
+
+block content
+    .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+      .row
+        .col-4
+          label.col-form-label(for = 'db_instance_selector') Database Instance:
+        .col-8
+          select.form-control.form-control-sm#db_instance_selector
+            option 数据库实例1 | DBMind_Testing | id: 23i1
+
+      .btn-toolbar.mb-2.mb-md-0
+        button.btn.btn-sm.btn-outline-secondary.dropdown-toggle(type='button')
+          span(data-feather='calendar')
+          |  Date
+      .btn-toolbar.mb-2.mb-md-0
+        .btn-group.mr-2
+          button.btn.btn-sm.btn-outline-secondary(type='button') Confirm
+
+    br
+    .row
+      .col-xs-12.col-sm-12.col-md-12
+        .card
+          .card-body
+            .row
+              #cpu_chart_div.col-md-3.col-3.text-center(style='border-right: 1.5px solid #dee2e6!important')
+                h5.text-muted CPU Usage Rate
+                #cpu_chart
+              #network_line_div.col-md-3.col-3.text-center(style='border-right: 1.5px solid #dee2e6!important')
+                h5.text-muted Network Speed
+                #network_line
+              #io_line_div.col-md-3.col-3.text-center(style='border-right: 1.5px solid #dee2e6!important')
+                h5.text-muted I/O Throughput
+                #io_line
+              #disk_chart_div.col-md-3.col-3.text-center
+                h5.text-muted Disk Usage Rate
+                #disk_chart
+    br
+    .row
+      .col-xs-12.col-sm-12.col-md-12
+        .card
+          .card-body
+            .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+              h5.card-title DBMS Report
+
+              .btn-toolbar.mb-2.mb-md-0
+                .row
+                  .col-4
+                    label.col-form-label(for = 'dbms_instance_selector') Parameters:
+                  .col-8
+                    select.form-control.form-control-sm#dbms_instance_selector
+                      option (86)dbmsSeqScan：线性扫描次数
+                      option (88)dbmsIdxScan：索引扫描次数
+                      option (51)dbmsActiveProcess：活跃的连接进程数目
+                      option (62)dbmsXactCommits：提交的事务数目
+                      option (63)dbmsXactRollbacks：回滚的事务数目
+                      option (67)dbmsTupleFetched：fetch tuple的数目
+                      option (68)dbmsTupleInserts：insert tuple的数目
+                      option (69)dbmsTupleUpdates：update tuple的数目
+                      option (83)dbmsBuffersAlloc：分配的buffer的数目
+                      option (46)dbmsBuffersClean：清理的buffer的数目
+            .dbms_vis_panel#dbms_line_div
+              #dbms_line1
+
+
+    br
+    .row
+      .col-xs-3.col-sm-3.col-md-3
+        .card
+          .card-body
+            h5.card-title 异常警告列表
+
+            ul.timeline.widget
+              li
+                .block
+                  h6 Reported Alert 1
+                  small.text-muted
+                    span 2020-05-06 12:23
+                  br
+                  br
+                  p details descriptions ...
+                  span
+                    a(href='#') Read More
+              li
+                .block
+                  h6 Reported Alert 2
+                  small.text-muted
+                    span 2020-05-06 12:23
+                  br
+                  br
+                  p details descriptions ...
+                  span
+                    a(href='#') Read More
+      .col-xs-6.col-sm-6.col-md-6
+        .card
+          .card-body
+            h5.card-title 健康程度排名
+
+            table.table.table-hover.text-muted
+              thead
+                tr
+                  th(scope='col') 实例 ID / 名称
+                  //th(scope='col') 规格
+                  th(scope='col') 健康等级(Avg)
+                  th(scope='col') 趋势图
+              tbody
+                tr
+                  th(scope='row') 1
+                  //td Mark
+                  td Good
+                  td#td_line1_div
+                    #td_line1
+
+
+      .col-xs-3.col-sm-3.col-md-3
+        .card
+          .card-body#pie_chart_div
+            h5.card-title 任务运行状况
+            #pie_chart

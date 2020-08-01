@@ -1,0 +1,128 @@
+
+doctype html
+html(lang='en')
+  head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=Edge,chrome=1')
+    //meta(name='viewport', content='width=device-width, initial-scale=1')
+    // The above 2 meta tags *must* come first in the head; any other head content must come *after* these tags
+    meta(name='renderer', content='webkit')
+    link(rel='icon', href='./images/icon/favicon.png')
+    title DBMind-Tsinghua
+    link(rel='canonical', href='https://getbootstrap.com/docs/4.4/examples/dashboard/')
+    // Bootstrap core CSS
+    link(href='https://getbootstrap.com/docs/4.4/dist/css/bootstrap.min.css', rel='stylesheet', integrity='sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh', crossorigin='anonymous')
+    // Favicons
+    link(rel='icon', href='./images/icon/favicon.png')
+    style.
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    // Custom styles for this template
+    link(href='https://getbootstrap.com/docs/4.4/examples/dashboard/dashboard.css', rel='stylesheet')
+    link(href='/stylesheets/style.css', rel='stylesheet')
+  body
+    nav.navbar.navbar-dark.fixed-top.flex-md-nowrap.p-0.shadow.bg-secondary
+      a.navbar-brand.col-sm-3.col-md-2.mr-0(href='/' style="background:#2A3F54")
+        img.mx-auto.d-block(src='images/logo/logo.png' style='width:150px;')
+      ul.nav(style='margin-right:5%')
+        li.nav-item
+          a.btn.nav-link
+            span
+              img(src='images/icon/消息.svg')
+            span.badge.badge-info  4
+        li.nav-item.dropdown
+          a.btn.nav-link.dropdown-toggle(data-toggle='dropdown', href='#', role='button', aria-haspopup='true', aria-expanded='false')
+            span
+              img(src='images/icon/用户-32.svg')
+            | Username
+          .dropdown-menu.bg-secondary
+            a.dropdown-item(href='#') Settings
+            //a.dropdown-item(href='#') Another action
+            //a.dropdown-item(href='#') Something else here
+            .dropdown-divider
+            a.dropdown-item(href='#') Log out
+
+    .container-fluid
+      .row
+        nav.col-md-2.d-none.d-md-block.sidebar(style="background:#2A3F54")
+          br
+          br
+          br
+          .row
+              img.mx-auto.d-block(src='images/icon/用户-128.svg')
+          .row
+              p.mx-auto.d-block.text-secondary Welcome, Sir
+          .sidebar-sticky
+            ul.nav.flex-column
+              li.nav-item.li-margin
+                a.nav-link(href='design')
+                  span
+                    img(src='images/icon/设计.svg' )
+                  |  数据库智能设计
+
+        main.col-md-10.ml-sm-auto.col-lg-10.px-4(role='main')
+          block content
+        footer.footer
+          hr
+          .col-md-9.ml-sm-auto.col-lg-10.px-4
+            span.text-muted &copy; 2020 &nbsp
+            a(href="http://dbgroup.cs.tsinghua.edu.cn/ligl/index.html") Database Research Group, Tsinghua University
+    script(src='https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js')
+    script(src='https://getbootstrap.com/docs/4.4/dist/js/bootstrap.bundle.min.js', integrity='sha384-6khuMg9gaYr5AxOqhkVIODVIvm9ynTT5J4V1cfthmT+emCG6yVmEZsRHdxlotUnm', crossorigin='anonymous')
+    script(src='https://unpkg.com/feather-icons/dist/feather.min.js')
+
+    script(src='/pace/pace.min.js')
+    script(src = '/bootstrap/js/bootstrap-show-password.min.js')
+    script(src='/javascripts/user.js')
+    //Echarts
+    script(src='https://cdn.bootcdn.net/ajax/libs/echarts/4.7.0/echarts-en.min.js')
+    // script(src='/javascripts/dashboard.js')
+    script(src='https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js')
+    //vue + pev2
+    script(src='https://cdn.jsdelivr.net/npm/vue/dist/vue.js')
+    script(src='/javascripts/pev2.umd.min.js')
+    script(src='/bootstrap/js/jedate.js')
+    link(rel='stylesheet', href='/stylesheets/jedate.css')
+
+    script(type='text/javascript').
+        //使图标生效
+        feather.replace();
+        //TODO
+        $("#uploadUserDataset").click(function () {
+            if (username == '') {
+                $('#signInModal').modal({backdrop: 'static', keyboard: false}, 'show');
+                $('#signInMes').html(`<p class="bg-warning">Please sign in firstly before uploading your dataset.<\p>`)
+            }
+        });
+
+        req_username();
+
+        $("#openSignInModal").click(function () {
+            $('#signUpModal').modal({backdrop: 'static', keyboard: false}, 'show');
+        });
+
+        $("#signUpBtn").click(function () {
+            $('#signUpModal').modal({backdrop: 'static', keyboard: false}, 'show');
+        });
+
+        $("#signup").click(function () {
+            sign_up();
+        });
+        $("#signInBtn").click(function () {
+            $('#signInModal').modal({backdrop: 'static', keyboard: false}, 'show');
+        });
+        $("#signin").click(function () {
+            sign_in();
+        });
+    block js

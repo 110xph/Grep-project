@@ -1,0 +1,15 @@
+extends layout
+//- var data = 'FlyDelay2015'
+
+block content
+  .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+    h1.h2 数据库性能测试
+
+  p benchmark: job、tpcc、tpch、tpc-ds
+  p database：pg（version：最新 12，） 余翔）
+
+  hr
+  h3 开发提示
+  p 在 /views 文件夹下面写html代码。按正常的写html的写法写即可，需要将html代码转为jade模板，可通过这个网址进行在线html-to-jade: https://html2jade.org/
+  p css样式是基于bootstrap，大家可以用bootstrap原生样式，自定义的样式需要自己额外写css，可以写在/views/下面的jade文件里面，也可以写在 /public/stylesheets/ 下面
+  p js代码请在public/javascripts/文件夹下面进行编写。

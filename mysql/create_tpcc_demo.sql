@@ -1,0 +1,31 @@
+CREATE TABLE `sql_diagnose_3` (
+  `transaction_id` int(11) NOT NULL,
+  `query_id` int(11) NOT NULL AUTO_INCREMENT,
+  `query` text NOT NULL,
+  `start_time` varchar(30) DEFAULT NULL,
+  `end_time` varchar(30) DEFAULT NULL,
+  `true_duration` float DEFAULT NULL,
+  `predicted_duration` float DEFAULT NULL,
+  `true_cost` float DEFAULT NULL,
+  `predicted_cost` float DEFAULT NULL,
+  `true_seq_scan` float DEFAULT NULL,
+  `predicted_seq_scan` float DEFAULT NULL,
+  `true_index_scan` float DEFAULT NULL,
+  `predicted_index_scan` float DEFAULT NULL,
+  `page_hit` int(11) DEFAULT NULL,
+  `page_read` int(11) DEFAULT NULL,
+  `query_id_impact_1` int(11) DEFAULT NULL,
+  `query_id_impact_2` int(11) DEFAULT NULL,
+  `query_id_impact_3` int(11) DEFAULT NULL,
+  `query_id_impact_4` int(11) DEFAULT NULL,
+  `query_id_impact_5` int(11) DEFAULT NULL,
+  `is_slow` int(11) DEFAULT NULL,
+  `possible_index_1` varchar(10) DEFAULT NULL,
+  `index_improvement_1` float DEFAULT NULL,
+  `possible_index_2` varchar(10) DEFAULT NULL,
+  `index_improvement_2` float DEFAULT NULL,
+  `diagnose_info` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`query_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=494 DEFAULT CHARSET=latin1;
+
+load data local infile '/home/ji/tpcc_workloads_3.csv' into table sql_diagnose_3 fields terminated by ',' optionally enclosed by '"' escaped by '' lines terminated by '\n' IGNORE 1 LINES (transaction_id,query_id,query,start_time,end_time,true_duration,predicted_duration,true_cost,predicted_cost,true_index_scan,predicted_index_scan,true_seq_scan,predicted_seq_scan,page_hit,page_read,query_id_impact_1,query_id_impact_2,query_id_impact_3,query_id_impact_4,query_id_impact_5,is_slow,possible_index_1,index_improvement_1,possible_index_2,index_improvement_2,diagnose_info);

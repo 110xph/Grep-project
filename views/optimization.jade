@@ -1,0 +1,355 @@
+extends layout
+//- var data = 'FlyDelay2015'
+
+block content
+  .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+    h1.h2 View Advisor #{num}
+
+  .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+    .col
+      .row
+        .col-1.pl-0
+          label.col-form-label(for = 'view_dataset_selector') Dataset:
+        .col-2.pt-1
+          select.form-control.form-control-sm#view_dataset_selector
+            option IMDB
+
+        .col-1.pl-0
+          label.col-form-label(for = 'View_budget') Budget:
+        .col-2
+          .input-group
+            input.form-control(type='text', value='500', aria-label='Budget')#View_budget
+            .input-group-append
+              span.input-group-text MB
+
+      .row
+        .col-1.pl-0
+          label.col-form-label(for = 'view_worklaod_selector') Workload:
+        .col-2.pt-1
+          select.form-control.form-control-sm#view_worklaod_selector
+            option JOB
+        .col-1.pl-0
+          label.col-form-label(for = 'view_upload_worklaod') Upload:
+        .col-3.pt-1
+          input.form-control-file(type='file', aria-label='upload_file_help')#view_upload_worklaod
+
+      .row
+        .btn-toolbar.mb-2.mb-md-2
+          .btn-group.mr-2
+            button.btn.btn-sm.btn-outline-secondary(type='button')#view_update Update
+
+  .row.pt-3.pb-2
+    .col.col-xs-12.col-sm-12.col-md-12
+      .card
+        .card-body
+          .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+            .row
+              .col-xs-12.col-sm-12.col-md-12
+                h4.card-title.text-muted Query:
+            br
+          textarea#view_query(name="Query", cols="80", rows="15" style="white-space: pre") #{query_value}
+          .btn-toolbar.mb-2.mb-md-2.pt-1
+            .btn-group.mr-2
+              button.btn.btn-sm.btn-outline-secondary(type='button')#view_query_optimize Optimize
+
+  .row.pt-3.pb-2
+    .col.col-xs-12.col-sm-12.col-md-12
+      .card
+        .card-body
+          .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+            .row
+              .col-xs-12.col-sm-12.col-md-12
+                h4.card-title.text-muted Rewritten query:
+            br
+          .row.col-9.mb-1
+            .col-4.pl-0
+              label.col-form-label(for = 'View_esti_ori_runtime') Estimated origin runtime:
+            .col-4
+              .input-group
+                input.form-control(type='text', value='#{ori_runtime}', aria-label='Estimated_origin_runtime', readonly='readonly')#View_esti_ori_runtime
+                .input-group-append
+                      span.input-group-text ms
+          .row.col-9.mb-3
+            .col-4.pl-0
+              label.col-form-label(for = 'View_esti_opti_runtime') Estimated optimized runtime:
+            .col-4
+              .input-group
+                input.form-control(type='text', value='#{opt_runtime}', aria-label='Estimated_optimized_runtime', readonly='readonly')#View_esti_opti_runtime
+                .input-group-append
+                      span.input-group-text ms
+          
+          textarea#view_rewritten_query(name="Rewritten_query", cols="80", rows="15") #{rewritten_query_value}
+          .btn-toolbar.mb-2.mb-md-2.pt-1
+            .btn-group.mr-2
+              button.btn.btn-sm.btn-outline-secondary(type='button')#view_query_run Run
+
+
+  .row.pt-3.pb-2
+    .col.col-xs-12.col-sm-12.col-md-12
+      .card
+        .card-body
+          .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+            .row
+              .col-xs-12.col-sm-12.col-md-12
+                h4.card-title.text-muted Query Result:
+            br
+          textarea#view_query_result(name="Query_result", cols="80", rows="15") #{result_value}
+
+  .row.pt-3.pb-2.border-bottom
+    .col.col-xs-12.col-sm-12.col-md-12
+      .card
+        .card-body
+          .d-flex.justify-content-between.flex-wrap.flex-md-nowrap.align-items-center.pt-3.pb-2.mb-3.border-bottom
+            .row
+              .col-xs-12.col-sm-12.col-md-12
+                h4.card-title.text-muted View maintenance:
+            br
+          .row
+            .col-xs-12.col-sm-12.col-md-12
+              table.table.table-hover.table-striped
+                thead
+                  tr
+                    th(scope='col') View
+                    th(scope='col') Space
+                    //th(scope='col') Option
+                    th(scope='col') Rate
+                tbody
+                  tr
+                    td
+                      | SELECT mi.info_type_id,
+                      |         mi.note,
+                      |         mi.movie_id,
+                      |         mi.info
+                      | FROM movie_info AS mi
+                      | WHERE mi.info IN ('Sweden',
+                      |                   'Norway',
+                      |                   'Germany',
+                      |                   'Denmark',
+                      |                   'Swedish',
+                      |                   'Denish',
+                      |                   'Norwegian',
+                      |                   'German',
+                      |                   'Bulgaria',
+                      |                   'USA',
+                      |                   'American');
+                    td 63 MB
+                    td 60%
+                    //td 305
+                  tr
+                    td
+                      | SELECT it.info,
+                      |         mi_idx.movie_id,
+                      |         mi_idx.info AS minfo
+                      | FROM info_type AS it,
+                      |     movie_info_idx AS mi_idx
+                      | WHERE it.id = mi_idx.info_type_id;
+                    td 103 MB
+                    td 40%
+                    //td 47
+                    
+                    
+                    
+                    
+  h1 Index Advisor
+  .row
+    .col-md-6
+      .card
+        .card-header
+          h4.card-title Tpc-H
+        .card-body
+          table.table.table-hover.table-striped
+            thead
+              tr
+                th Table
+                th Column Number
+                th Index Number
+            tbody
+              tr
+                td supplier
+                td 7
+                td 1
+              tr
+                td nation
+                td 4
+                td 0
+              tr
+                td region
+                td 3
+                td 0
+              tr
+                td customer
+                td 8
+                td 1
+              tr
+                td part
+                td 9
+                td 0
+              tr
+                td partsupp
+                td 5
+                td 0
+              tr
+                td orders
+                td 9
+                td 0
+              tr
+                td lineitem
+                td 16
+                td 2
+        form(action='#', method='post', enctype='multipart/form-data')
+          .row
+            .col-md-4.pr-1
+              label Database Name
+              select.form-control
+                option Tpc-H
+                option Tpc-DS
+                option JOB
+                option Tpc-C
+          button.btn.btn-info.btn-fill.pull-right(type='submit') Change
+          .clearfix
+          // {% csrf_token %}
+    .col-md-6
+      .card
+        .card-header
+          h4.card-title Index Info
+        .card-body
+          table.table.table-hover.table-striped
+            thead
+              tr
+                th Table
+                th Column
+                th Index Type
+                th Size(MB)
+            tbody
+              tr
+                td supplier
+                td s_suppkey
+                td B-Tree
+                td 18
+              tr
+                td customer
+                td c_custkey
+                td B-Tree
+                td 8
+              tr
+                td lineitem
+                td l_suppkey
+                td B-Tree
+                td 32
+              tr
+                td lineitem
+                td l_partkey
+                td B-Tree
+                td 35
+        .col-md-4
+          a.btn.btn-info.btn-fill(href='#/') Change Index
+  .row
+    .col-md-12
+      .card
+        .card-header
+          h4.card-title Time Saving
+        .card-body
+          table.table.table-hover.table-striped
+            thead
+              tr
+                th Query
+                th Frequency
+                th Execution Time(Without Index)
+                th Execution Time (With Index)
+                th Time Saving(ms)
+            tbody
+              tr
+                td
+                  | select o_orderpriority, count(*) as order_count from orders where o_orderdate >= date '1995-05-01' and o_orderdate < date '1995-05-01' + interval '3' month group by o_orderpriority order by o_orderpriority;
+                td 20%
+                td 1987
+                td 724
+                td
+                  | 1263
+              tr
+                td
+                  | select c_custkey, count(o_orderkey) from customer, orders where c_custkey = o_custkey and o_comment not like '%special%deposits%' group by c_custkey;
+                td 20%
+                td 736
+                td 658
+                td
+                  | 78
+              tr
+                td
+                  | select sum(l_extendedprice) / 7.0 as avg_yearly from lineitem, part where p_partkey = l_partkey and p_brand = 'Brand#34' and p_container = 'SM DRUM' ;
+                td 20%
+                td 1723
+                td 1457
+                td
+                  | 266
+              tr
+                td
+                  | select 0.5 * sum(l_quantity) from lineitem, partsupp where l_partkey = ps_partkey and l_suppkey = ps_suppkey and l_shipdate >= date '1996-11-01' and l_shipdate < date '1996-11-01' + interval '1' year;
+                td 20%
+                td 2414
+                td 2359
+                td
+                  | 55
+              tr
+                td
+                  | select ps_partkey, sum(ps_supplycost * ps_availqty) as value from partsupp, supplier, nation where ps_suppkey = s_suppkey and s_nationkey = n_nationkey and n_name = 'ROMANIA' group by ps_partkey order by value desc;
+                td 20%
+                td 4213
+                td 724
+                td
+                  | 856
+  .row
+    .col-md-8
+      .card
+        .card-header
+          h4.card-title Upload WorkLoad
+        .card-body
+          form(action='#', method='post', enctype='multipart/form-data')
+            .row
+              .col-md-6.pr-1
+                label Workload Name
+                input.form-control(type='text', name='filename')
+              .col-md-6.pr-1.file
+                label File
+                input.form-control(type='file', name='file')
+            button.btn.btn-info.btn-fill.pull-right(type='submit') Upload
+            .clearfix
+            // {% csrf_token %}
+  .row
+    .col-md-8
+      .card
+        .card-header
+          h4.card-title Set Parameters
+        .card-body
+          form(action='#', method='post')
+            .row
+              .col-md-4.pr-1
+                label Episode
+                input.form-control(type='text', name='Episode')
+              .col-md-4.pr-1
+                label Learning Rate
+                input.form-control(type='text', name='lr')
+              .col-md-4.pr-1
+                label Storage Budget(MB)
+                input.form-control(type='text', name='sb')
+            button.btn.btn-info.btn-fill.pull-right(type='Train Model') Set
+            .clearfix
+            // {% csrf_token %}
+      .card
+        .card-header
+          h4.card-title Train
+        .card-body
+          form(action='#', method='post')
+            .row
+              .col-md-4.pr-1
+                label Episode
+                p 1024
+              .col-md-4.pr-1
+                label Learning Rate
+                p 0.01
+              .col-md-4.pr-1
+                label Storage Budget(MB)
+                p 100
+            button.btn.btn-info.btn-fill.pull-right(type='Train Model') Train
+            .clearfix
+            // {% csrf_token %}
