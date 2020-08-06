@@ -1,6 +1,6 @@
-resizeContainer('sq_performance', 'performance_div', 0.95, 0.8);
-resizeContainer('trans_performance', 'performance_div', 0.95, 0.8);
-resizeContainer('server_graph_chart', 'partition_div', 1.5, 0.5);
+resizeContainer('sq_performance', 'performance_div', 0.95, 0.6);
+resizeContainer('trans_performance', 'performance_div', 0.95, 0.6);
+resizeContainer('server_graph_chart', 'partition_div', 1, 0.8);
 // resizeContainer('row_subgraph', 'row_div', 1, 0.5);
 
 //resizeContainer('data_graph_chart', 'graph_chart_div', 1, 0.6);
@@ -51,8 +51,34 @@ $.get('/about/actual-graph', function (xml) {
 //bar_chart(bar_dom_id)
 // subgraph_chart(row_subgraph_dom_id, [{value: 70, name: ''}]);
 
+function callAjax(){
+    var method_id = document.getElementById("methodselect").selectedIndex;
+    var arch_id = document.getElementById("archselect").selectedIndex;
+    var instance_id = document.getElementById("instanceselect").selectedIndex;
+    $.ajax({
+
+        method: 'GET',
+        url: "/design/ajax", // 这个url是发送到对应的routes下
+        data: {
+            method: method_id,
+            arch: arch_id,
+            instance: instance_id,
+        },
+        dataType: 'json',
+        success: function(response){
+            // 成功接接收Web后端的响应，在这里可以选择执行一些对前端的操作
+            console.log('success, and do something here!');
+            console.log(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert("something wrong.");
+        }
+    })
+}
+
 function showDemo(dom_id) {
     demoInfo.innerHTML = "Dataset:TPC-H | Size:0.1x | Queries:3000";
+    callAjax();
     var body = document.getElementsByTagName("body")[0];
     // create elements <table> and a <tbody>
     var tbl = document.createElement("table");
@@ -304,95 +330,147 @@ function gauge_chart(dom_id, data) {
 }
 
 function showLocalServer(id) {
-    // var divContainer = document.getElementById("server_graph_chart");
-    // divContainer.innerHTML = "";
+    if (id == '0'){
+        serverInfo.innerHTML = "# Cluster-local, Total: 11";
+        server_graph_chart_dom_id.innerHTML = "";
+        server_graph_chart_dom_id.showLoading();
+        $.get('/about/server-graph', function (xml) {
+            server_graph_chart_dom_id.hideLoading();
+            var graph = dataTool.gexf.parse(xml);
+            var categories = [];
+            categories[0] = {name: "166.111.121.x"}
+            categories[1] = {name: "172.6.31.x"}
 
-    serverInfo.innerHTML = "# Cluster-local, Total: 11";
-
-//    graph_chart(server_graph_chart_dom_id, [{value: 70, name: ''}]);
-
-    server_graph_chart_dom_id.innerHTML = "";
-    server_graph_chart_dom_id.showLoading();
-    $.get('/about/server-graph', function (xml) {
-        server_graph_chart_dom_id.hideLoading();
-        var graph = dataTool.gexf.parse(xml);
-        var categories = [];
-        categories[0] = {name: "166.111.121.x"}
-        categories[1] = {name: "172.6.31.x"}
-
-        graph.nodes.forEach(function (node) {
-            node.itemStyle = null;
-            node.value = node.symbolSize;
-            // node.label.normal.show = node.symbolSize > 30;
-            node.category = node.attributes.modularity_class;
-        });
-        option = {
-            title: {
-                text: 'Les Miserables',
-                subtext: 'Default layout',
-                top: 'bottom',
-                left: 'right'
-            },
-            tooltip: {},
-            legend: [{
-                // selectedMode: 'single',
-                data: categories.map(function (a) {
-                    return a.name;
-                })
-            }],
-            animationDuration: 1500,
-            animationEasingUpdate: 'quinticInOut',
-            series : [
-                {
-                    name: 'Server Info',
-                    type: 'graph',
-                    layout: 'none',
-                    data: graph.nodes,
-                    links: graph.links,
-                    categories: categories,
-                    roam: true,
-                    label: {
-                        normal: {
-                            position: 'right'
-                        }
-                    },
-                    lineStyle: {
-                        normal: {
-                            curveness: 0.3
+            graph.nodes.forEach(function (node) {
+                node.itemStyle = null;
+                node.value = node.symbolSize;
+                // node.label.normal.show = node.symbolSize > 30;
+                node.category = node.attributes.modularity_class;
+            });
+            option = {
+                title: {
+                    text: 'Les Miserables',
+                    subtext: 'Default layout',
+                    top: 'bottom',
+                    left: 'right'
+                },
+                tooltip: {},
+                legend: [{
+                    // selectedMode: 'single',
+                    data: categories.map(function (a) {
+                        return a.name;
+                    })
+                }],
+                animationDuration: 1500,
+                animationEasingUpdate: 'quinticInOut',
+                series : [
+                    {
+                        name: 'Server Info',
+                        type: 'graph',
+                        layout: 'none',
+                        data: graph.nodes,
+                        links: graph.links,
+                        categories: categories,
+                        roam: true,
+                        label: {
+                            normal: {
+                                position: 'right'
+                            }
+                        },
+                        lineStyle: {
+                            normal: {
+                                curveness: 0.3
+                            }
                         }
                     }
-                }
-            ]
-        };
-        server_graph_chart_dom_id.setOption(option);
+                ]
+            };
+            server_graph_chart_dom_id.setOption(option);
 
-    }, 'xml');
+        }, 'xml');
 
-    server_graph_chart_dom_id.on('click', function (params){
-        console.log(params.name);
-        var dvalue = 26 + Math.random()*10;
-        var cvalue = 0.81 + Math.random()*2;
-        var ivalue = 1.23 + Math.random()*2;
-        dvalue = dvalue.toFixed(2);
-        cvalue = cvalue.toFixed(2);
-        ivalue = ivalue.toFixed(2);
+        server_graph_chart_dom_id.on('click', function (params){
+            if (params.dataType == 'node'){
+                console.log(params.name);
+                var dvalue = 26 + Math.random()*10;
+                var cvalue = 0.81 + Math.random()*2;
+                var ivalue = 1.23 + Math.random()*2;
+                dvalue = dvalue.toFixed(2);
+                cvalue = cvalue.toFixed(2);
+                ivalue = ivalue.toFixed(2);
 
-        $("#diskbar").css("width",dvalue+ + "%").text(dvalue + "%");
-        $("#cpubar").css("width",cvalue + "%").text(cvalue + "%");
-        $("#iobar").css("width",ivalue + "%").text(ivalue + "%");
-        nodelabel.innerHTML = params.name;
-    });
+                $("#diskbar").css("width",dvalue+ + "%").text(dvalue + "%");
+                $("#cpubar").css("width",cvalue + "%").text(cvalue + "%");
+                $("#iobar").css("width",ivalue + "%").text(ivalue + "%");
+                nodelabel.innerHTML = params.name;
+            }
+        });
+    }
+    $.ajax({
 
-    //gauge_chart(cpu_chart_dom_id, [{value: 81, name: ''}]);
-    //d_graph_chart(d_graph_dom_id);
+        method: 'GET',
+        url: "/design/server", // 这个url是发送到对应的routes下
+        data: {
+            server: id,
+        },
+        dataType: 'json',
+        success: function(response){
+            // 成功接接收Web后端的响应，在这里可以选择执行一些对前端的操作
+            console.log('success, and do something here!');
+            console.log(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert("something wrong.");
+        }
+    })
 }
 
 function showLocalWorkload(id) {
-    workloadInfo.innerHTML = "# Type: TPC-H";
+    if (id == '0')
+        workloadInfo.innerHTML = "# Type: TPC-H";
+    else if (id == '1')
+        workloadInfo.innerHTML = "# Type: TPC-C";
+    else if (id == '2')
+        workloadInfo.innerHTML = "# Type: JOB";
+    $.ajax({
+
+        method: 'GET',
+        url: "/design/workload", // 这个url是发送到对应的routes下
+        data: {
+            workload: id,
+        },
+        dataType: 'json',
+        success: function(response){
+            // 成功接接收Web后端的响应，在这里可以选择执行一些对前端的操作
+            console.log('success, and do something here!');
+            console.log(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert("something wrong.");
+        }
+    })
 }
 
 function showLocalData(id) {
-    dataInfo.innerHTML = "# Size: 100M";
+    if (id == '0')
+        dataInfo.innerHTML = "# Size: 100M";
+    $.ajax({
+
+        method: 'GET',
+        url: "/design/data", // 这个url是发送到对应的routes下
+        data: {
+            data: id,
+        },
+        dataType: 'json',
+        success: function(response){
+            // 成功接接收Web后端的响应，在这里可以选择执行一些对前端的操作
+            console.log('success, and do something here!');
+            console.log(response);
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert("something wrong.");
+        }
+    })
 }
 
 function selectPartitionFunc(dom_id){
@@ -557,24 +635,26 @@ function commitDataset(dom_id){
         // console.log('links: ' + data.length);
     }, 500);
 
-    server_graph_chart_dom_id.on('mouseover', function (params){
-        console.log(params.name);
-        var dvalue = 26 + Math.random()*10 + 40;
-        var cvalue = 0.81 + Math.random()*2 + 50.23;
-        var ivalue = 1.23 + Math.random()*2 + 80.92;
-        dvalue = dvalue.toFixed(2);
-        cvalue = cvalue.toFixed(2);
-        ivalue = ivalue.toFixed(2);
+    server_graph_chart_dom_id.on('click', function (params){
+        if (params.dataType == 'node'){
+            console.log(params.name);
+            var dvalue = 26 + Math.random()*10 + 40;
+            var cvalue = 0.81 + Math.random()*2 + 50.23;
+            var ivalue = 1.23 + Math.random()*2 + 80.92;
+            dvalue = dvalue.toFixed(2);
+            cvalue = cvalue.toFixed(2);
+            ivalue = ivalue.toFixed(2);
 
-        $("#diskbar").css("width",dvalue+ + "%").text(dvalue + "%");
-        $("#cpubar").css("width",cvalue + "%").text(cvalue + "%");
-        $("#iobar").css("width",ivalue + "%").text(ivalue + "%");
-        nodelabel.innerHTML = params.name;
+            $("#diskbar").css("width",dvalue+ + "%").text(dvalue + "%");
+            $("#cpubar").css("width",cvalue + "%").text(cvalue + "%");
+            $("#iobar").css("width",ivalue + "%").text(ivalue + "%");
+            nodelabel.innerHTML = params.name;
+        }
     });
 
 }
 
-function showServerOption(id,servermenu) {
+function showServerOption(id, servermenu) {
     servermenu.innerHTML = id.innerHTML;
     data_graph_chart(server_graph_chart_dom_id, [{value: 70, name: ''}]);
     //gauge_chart(cpu_chart_dom_id, [{value: 81, name: ''}]);
@@ -1294,7 +1374,7 @@ function resizeContainer(chart_id, chart_div, width_ratio = 1, height_ratio = fa
     container.style.width = $("#"+chart_div).width() * width_ratio + 'px';
     if (height_ratio != false){
         // 有长宽比例的时候
-        container.style.height = $("#"+chart_id).width() * height_ratio + 'px';
+        container.style.height = $("#"+chart_div).width() * height_ratio + 'px';
     }
 }
 

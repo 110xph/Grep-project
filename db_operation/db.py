@@ -1,10 +1,13 @@
 import psycopg2
+import os
+import sys
+import re
 
 
 def table_col(file_name='tpch'):
     """read (tables, columns) from the table definition file"""
     
-    path = './data/' + file_name + "/{}-create.sql".format("tpch")
+    path = './data/' + file_name + "/sql/{}-create.sql".format("tpch")
     regex = re.compile(';\($')
     
     tbl_name = {}
@@ -32,8 +35,8 @@ def execute_sql(sql):
     conn = psycopg2.connect(database='tpch1x', # tpch1x (0.1m, 10m), tpch100m (100m)
                             user='postgres',
                             password='postgres',
-                            host='166.111.121.62',
-                            port=5432)
+                            host='localhost',
+                            port=5301)
     fail = 0
     cur = conn.cursor()
     try:
@@ -143,3 +146,85 @@ def parse_workload(folder_name='tpch'):
 #    print(cnt)
     print("[join number] ", j_cnt)
     return q_joins,jc_graph, q_selects
+
+def preprocess(filename):
+    with open(filename, "r", encoding="utf-8") as f1, open("%s.bak" % filename, "w", encoding="utf-8") as f2:
+        for line in f1.readlines():
+            line = line.rstrip()
+            if line[-1] == '|':
+                line = line[:-1]
+            f2.write(line + '\n')
+    os.remove(filename)
+    os.rename("%s.bak" % filename, filename)
+
+def execute_workload(folder_name):
+    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
+                            user='postgres',
+                            password='postgres',
+                            host='127.0.0.1',
+                            port=5301)
+
+    fail = False
+    sql_latency = {}
+    cur = conn.cursor()
+    try:
+        cur.execute('DROP SCHEMA public CASCADE;\n\
+                CREATE SCHEMA public;\n\
+                GRANT ALL ON SCHEMA public TO postgres;\n\
+                GRANT ALL ON SCHEMA public TO public;')
+    except:
+        fail = True
+    path = os.path.join('.', 'data', folder_name)
+    path_create = os.path.join(path, 'sql', "{}-create.sql".format("tpch"))
+    with open(path_create, 'r') as f:
+        sql = ''.join(f.readlines())
+        try:
+            cur.execute(sql)
+        except:
+            fail = True
+        if not fail:
+            path_data = os.path.join(path, 'data')
+            for filename in os.listdir(path_data):
+                file_name = os.path.join(path_data, filename)
+                preprocess(file_name)
+                tbl_name = filename.split('.')[0]
+                try:
+                    cur.execute("copy {} from '{}' WITH DELIMITER AS '|';".format(tbl_name, os.path.abspath(file_name)))
+                except:
+                    fail = True
+            if not fail:
+                path_sql = os.path.join(path, 'sql')
+                regex = re.compile('^([0-9]*)\.sql')
+                for filename in os.listdir(path_sql):
+                    m = re.match(regex, filename)
+                    if m is not None:
+                        file_name = os.path.join(path_sql, filename)
+                        with open(file_name, 'r') as f:
+                            sql = 'EXPLAIN ANALYZE\n' + ''.join(f.readlines())
+                            sql_fail = False
+                            try:
+                                cur.execute(sql)
+                                conn.commit()
+                            except:
+                                sql_fail = True
+                            if not sql_fail:
+                                res = cur.fetchall()[-1][0]
+                                regex_latency = re.compile('^Execution time: (.*?) ms$')
+                                latency = float(re.match(regex_latency, res).group(1))
+                                r = int(m.group(1))
+                                print(r)
+                                print(latency)
+                                sql_latency[r] = latency
+    
+    print(sql_latency)
+    print(fail)
+    conn.commit()    
+     # todo
+    cur.close()
+    conn.close()
+
+if __name__ == '__main__':
+    folder_name = sys.argv[1]
+    tbl_name = table_col(folder_name)
+    execute_workload(folder_name)
+
