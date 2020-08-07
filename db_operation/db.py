@@ -177,7 +177,11 @@ def execute_workload(folder_name):
     path = os.path.join('.', 'data', folder_name)
     path_create = os.path.join(path, 'sql', "{}-create.sql".format("tpch"))
     with open(path_create, 'r') as f:
-        sql = ''.join(f.readlines())
+        sql = ''
+        for line in f.readlines():
+            sql += line
+            if ';' in line:
+                sql += '\n'
         try:
             cur.execute(sql)
         except:
@@ -200,21 +204,34 @@ def execute_workload(folder_name):
                     if m is not None:
                         file_name = os.path.join(path_sql, filename)
                         with open(file_name, 'r') as f:
-                            sql = 'EXPLAIN ANALYZE\n' + ''.join(f.readlines())
-                            sql_fail = False
-                            try:
-                                cur.execute(sql)
-                                conn.commit()
-                            except:
-                                sql_fail = True
-                            if not sql_fail:
-                                res = cur.fetchall()[-1][0]
-                                regex_latency = re.compile('^Execution time: (.*?) ms$')
-                                latency = float(re.match(regex_latency, res).group(1))
-                                r = int(m.group(1))
-                                print(r)
-                                print(latency)
-                                sql_latency[r] = latency
+                            sql = ''
+                            new_sql = True
+                            select_sql = False
+                            for line in f.readlines():
+                                if new_sql:
+                                    if 'select' in line:
+                                        sql += 'EXPLAIN ANALYZE\n'
+                                        select_sql = True
+                                    else:
+                                        select_sql = False
+                                sql += line
+                                if '--' not in line and line != "\n":
+                                    new_sql = (';' in line)
+                                    if new_sql:
+                                        try:
+                                            cur.execute(sql)
+                                        except:
+                                            fail = True
+                                        if not fail and select_sql:
+                                            res = cur.fetchall()[-1][0]
+                                            regex_latency = re.compile('^Execution time: (.*?) ms$')
+                                            latency = float(re.match(regex_latency, res).group(1))
+                                            r = int(m.group(1))
+                                            print(r)
+                                            print(latency)
+                                            sql_latency[r] = latency
+                                        sql = ''
+                                
     
     print(sql_latency)
     print(fail)
