@@ -2,6 +2,7 @@ import psycopg2
 import os
 import sys
 import re
+import time
 
 
 def table_col(file_name='tpch'):
@@ -291,6 +292,27 @@ def info(port, tbl_name):
     conn.close()
     return node_info
 
+def commit_num(folder_name):
+    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
+                            user='postgres',
+                            password='postgres',
+                            host='127.0.0.1',
+                            port=5301)
+    fail = False
+    cur = conn.cursor()
+    res = None
+    try:
+        cur.execute('SELECT SUM(xact_commit)FROM pg_stat_database;')
+    except:
+        fail = True
+    if not fail:
+        res = int(cur.fetchone()[0])
+    conn.commit()    
+     # todo
+    cur.close()
+    conn.close()
+    return res
+
 if __name__ == '__main__':
     folder_name = sys.argv[1]
     tbl_name = table_col(folder_name)
@@ -302,10 +324,17 @@ if __name__ == '__main__':
             for tbl in node_info:
                 node_info[tbl] = node_info[tbl] / table_info[tbl]
             partition_ratio.append(node_info)
+
+        num1 = commit_num(folder_name)
+        t1 = time.time()
         if execute_workload(folder_name):
             sql_latency = top_slow_sql(folder_name)
+        num2 = commit_num(folder_name)
+        t2 = time.time()
+        throughput = (num2 - num1) / (t2 - t1)
         print(partition_ratio)
         print(sql_latency)
+        print(throughput)
         
 
 
