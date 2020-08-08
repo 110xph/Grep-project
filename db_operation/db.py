@@ -214,8 +214,12 @@ def execute_workload(folder_name):
                             port=5301)
 
     fail = False
-    sql_latency = {}
     cur = conn.cursor()
+    try:
+        cur.execute('CREATE EXTENSION pg_stat_statements;\n\
+                SELECT pg_stat_statements_reset();')
+    except:
+        fail = True
     path_sql = os.path.join('.', 'data', folder_name, 'sql')
     r_sql = re.compile('^([0-9]*)\.sql')
     for filename in os.listdir(path_sql):
@@ -224,39 +228,44 @@ def execute_workload(folder_name):
             file_name = os.path.join(path_sql, filename)
             with open(file_name, 'r') as f:
                 sql = ''
-                new_sql = True
-                select_sql = False
                 for line in f.readlines():
-                    if new_sql:
-                        if 'select' in line:
-                            sql += 'EXPLAIN ANALYZE\n'
-                            select_sql = True
-                        else:
-                            select_sql = False
-                    sql += line
-                    if '--' not in line and line != "\n":
-                        new_sql = (';' in line)
-                        if new_sql:
-                            try:
-                                cur.execute(sql)
-                            except:
-                                fail = True
-                            if not fail and select_sql:
-                                res = cur.fetchall()[-1][0]
-                                r_latency = re.compile('^Execution time: (.*?) ms$')
-                                latency = float(re.match(r_latency, res).group(1)) / 1000
-                                r = int(m.group(1))
-                                print(r)
-                                print(latency)
-                                sql_latency[r] = latency
-                            sql = ''
+                    if line[:2] != '--' and line != '\n':
+                        line = line.strip()
+                        sql += line
+                        sql += ' '
+                try:
+                    cur.execute(sql)
+                except:
+                    fail = True
                                 
     conn.commit()    
      # todo
     cur.close()
     conn.close()
+    return not fail
+
+def top_slow_sql(folder_name):
+    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
+                            user='postgres',
+                            password='postgres',
+                            host='127.0.0.1',
+                            port=5301)
+
+    fail = False
+    cur = conn.cursor()
+    res = None
+    try:
+        cur.execute('SELECT query, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;')
+    except:
+        fail = True
     if not fail:
-        return sql_latency
+        res = cur.fetchall()
+
+    conn.commit()    
+     # todo
+    cur.close()
+    conn.close()
+    return res
 
 def info(port, tbl_name):
     conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
@@ -293,9 +302,8 @@ if __name__ == '__main__':
             for tbl in node_info:
                 node_info[tbl] = node_info[tbl] / table_info[tbl]
             partition_ratio.append(node_info)
-        sql_latency = execute_workload(folder_name) # 各sql实际执行时间
-        sql_latency = sorted(sql_latency.items(), key=lambda d: d[1], reverse=True)
-        sql_latency = sql_latency[:10] # 切片时间最长的10个sql
+        if execute_workload(folder_name):
+            sql_latency = top_slow_sql(folder_name)
         print(partition_ratio)
         print(sql_latency)
         
