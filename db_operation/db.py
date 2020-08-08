@@ -157,7 +157,7 @@ def preprocess(filename):
     os.remove(filename)
     os.rename("%s.bak" % filename, filename)
 
-def execute_workload(folder_name):
+def create_dataset(folder_name):
     conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
                             user='postgres',
                             password='postgres',
@@ -165,7 +165,6 @@ def execute_workload(folder_name):
                             port=5301)
 
     fail = False
-    sql_latency = {}
     cur = conn.cursor()
     try:
         cur.execute('DROP SCHEMA public CASCADE;\n\
@@ -177,71 +176,128 @@ def execute_workload(folder_name):
     path = os.path.join('.', 'data', folder_name)
     path_create = os.path.join(path, 'sql', "{}-create.sql".format("tpch"))
     with open(path_create, 'r') as f:
-        sql = ''
-        for line in f.readlines():
-            sql += line
-            if ';' in line:
-                sql += '\n'
+        sql = ''.join(f.readlines())
         try:
             cur.execute(sql)
         except:
             fail = True
         if not fail:
             path_data = os.path.join(path, 'data')
+            r_tbl = re.compile('.*\.tbl$')
             for filename in os.listdir(path_data):
-                file_name = os.path.join(path_data, filename)
-                preprocess(file_name)
-                tbl_name = filename.split('.')[0]
-                try:
-                    cur.execute("copy {} from '{}' WITH DELIMITER AS '|';".format(tbl_name, os.path.abspath(file_name)))
-                except:
-                    fail = True
-            if not fail:
-                path_sql = os.path.join(path, 'sql')
-                regex = re.compile('^([0-9]*)\.sql')
-                for filename in os.listdir(path_sql):
-                    m = re.match(regex, filename)
-                    if m is not None:
-                        file_name = os.path.join(path_sql, filename)
-                        with open(file_name, 'r') as f:
-                            sql = ''
-                            new_sql = True
-                            select_sql = False
-                            for line in f.readlines():
-                                if new_sql:
-                                    if 'select' in line:
-                                        sql += 'EXPLAIN ANALYZE\n'
-                                        select_sql = True
-                                    else:
-                                        select_sql = False
-                                sql += line
-                                if '--' not in line and line != "\n":
-                                    new_sql = (';' in line)
-                                    if new_sql:
-                                        try:
-                                            cur.execute(sql)
-                                        except:
-                                            fail = True
-                                        if not fail and select_sql:
-                                            res = cur.fetchall()[-1][0]
-                                            regex_latency = re.compile('^Execution time: (.*?) ms$')
-                                            latency = float(re.match(regex_latency, res).group(1))
-                                            r = int(m.group(1))
-                                            print(r)
-                                            print(latency)
-                                            sql_latency[r] = latency
-                                        sql = ''
-                                
-    
-    print(sql_latency)
-    print(fail)
+                if r_tbl.search(filename) is not None:
+                    file_name = os.path.join(path_data, filename)
+                    preprocess(file_name)
+                    tbl_name = filename.split('.')[0]
+                    try:
+                        cur.execute("copy {} from '{}' WITH DELIMITER AS '|';".format(tbl_name, os.path.abspath(file_name)))
+                    except:
+                        fail = True
+    path_dss = os.path.join(path, 'data', 'dss.ri') # 去掉dss.ri中多主键以及外键相关的内容
+    with open(path_dss, 'r') as f:
+        sql = ''.join(f.readlines())
+        try:
+            cur.execute(sql)
+        except:
+            fail = True
     conn.commit()    
      # todo
     cur.close()
     conn.close()
+    return not fail
+
+def execute_workload(folder_name):
+    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
+                            user='postgres',
+                            password='postgres',
+                            host='127.0.0.1',
+                            port=5301)
+
+    fail = False
+    sql_latency = {}
+    cur = conn.cursor()
+    path_sql = os.path.join('.', 'data', folder_name, 'sql')
+    r_sql = re.compile('^([0-9]*)\.sql')
+    for filename in os.listdir(path_sql):
+        m = re.match(r_sql, filename)
+        if m is not None:
+            file_name = os.path.join(path_sql, filename)
+            with open(file_name, 'r') as f:
+                sql = ''
+                new_sql = True
+                select_sql = False
+                for line in f.readlines():
+                    if new_sql:
+                        if 'select' in line:
+                            sql += 'EXPLAIN ANALYZE\n'
+                            select_sql = True
+                        else:
+                            select_sql = False
+                    sql += line
+                    if '--' not in line and line != "\n":
+                        new_sql = (';' in line)
+                        if new_sql:
+                            try:
+                                cur.execute(sql)
+                            except:
+                                fail = True
+                            if not fail and select_sql:
+                                res = cur.fetchall()[-1][0]
+                                r_latency = re.compile('^Execution time: (.*?) ms$')
+                                latency = float(re.match(r_latency, res).group(1)) / 1000
+                                r = int(m.group(1))
+                                print(r)
+                                print(latency)
+                                sql_latency[r] = latency
+                            sql = ''
+                                
+    conn.commit()    
+     # todo
+    cur.close()
+    conn.close()
+    if not fail:
+        return sql_latency
+
+def info(port, tbl_name):
+    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
+                            user='postgres',
+                            password='postgres',
+                            host='127.0.0.1',
+                            port=port)
+    fail = False
+    node_info = {}
+    cur = conn.cursor()
+    for tbl in tbl_name:
+        try:
+            cur.execute('select count(*) from {};'.format(tbl))
+        except:
+            fail = True
+        if not fail:
+            res = cur.fetchone()
+            node_info[tbl] = res[0]
+
+    conn.commit()    
+     # todo
+    cur.close()
+    conn.close()
+    return node_info
 
 if __name__ == '__main__':
     folder_name = sys.argv[1]
     tbl_name = table_col(folder_name)
-    execute_workload(folder_name)
+    if create_dataset(folder_name):
+        table_info = info(5301, tbl_name)
+        partition_ratio = [] # 各结点划分比例
+        for i in range(1, 4):
+            node_info = info(5400 + i, tbl_name)
+            for tbl in node_info:
+                node_info[tbl] = node_info[tbl] / table_info[tbl]
+            partition_ratio.append(node_info)
+        sql_latency = execute_workload(folder_name) # 各sql实际执行时间
+        sql_latency = sorted(sql_latency.items(), key=lambda d: d[1], reverse=True)
+        sql_latency = sql_latency[:10] # 切片时间最长的10个sql
+        print(partition_ratio)
+        print(sql_latency)
+        
+
 
