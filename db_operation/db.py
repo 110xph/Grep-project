@@ -3,6 +3,7 @@ import os
 import sys
 import re
 import time
+from config import config
 
 
 def table_col(file_name='tpch'):
@@ -30,30 +31,83 @@ todo: no-predicate, nested-predicate,
     logical ops: or/and
 """
 
-def execute_sql(sql):
-    """execute sql and fetch the results"""
-    
-    conn = psycopg2.connect(database='tpch1x', # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='localhost',
-                            port=5301)
-    fail = 0
-    cur = conn.cursor()
+def fetch_all_sql(sql, folder_name, port = 5301):
+    res = None
+
+    conn = None
     try:
-        cur.execute(sql)
-    except:
-        fail = 1
-    res = []
-    if fail==0:
-        res = cur.fetchall()
-    
-    conn.commit() # todo
-    cur.close()
-    conn.close()
+        """execute sql and fetch the results"""
+        params = config(folder_name, port)
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+
+        fail = False
+        try:
+           cur.execute(sql)
+        except:
+            fail = True
+        if not fail:
+           res = cur.fetchall()
+
+        conn.commit()       
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
     
     return res
 
+def fetch_one_sql(sql, folder_name, port = 5301):
+    res = None
+
+    conn = None
+    try:
+        """execute sql and fetch the results"""
+        params = config(folder_name, port)
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+
+        fail = False
+        try:
+           cur.execute(sql)
+        except:
+            fail = True
+        if not fail:
+           res = cur.fetchone()
+
+        conn.commit()       
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+    
+    return res
+
+def execute_sql(sql, folder_name, port = 5301):
+
+    fail = False
+
+    conn = None
+    try:
+        """execute sql and fetch the results"""
+        params = config(folder_name, port)
+        conn = psycopg2.connect(**params)
+        cur = conn.cursor()
+        cur.execute(sql)
+        conn.commit()       
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        fail = True
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return fail
 
 def is_legal_prdicate(predicate):
     """ Check whether a line contains legal select/project/join (SPJ) predicate"""
@@ -148,79 +202,40 @@ def parse_workload(folder_name='tpch'):
     print("[join number] ", j_cnt)
     return q_joins,jc_graph, q_selects
 
-def preprocess(filename):
-    with open(filename, "r", encoding="utf-8") as f1, open("%s.bak" % filename, "w", encoding="utf-8") as f2:
-        for line in f1.readlines():
-            line = line.rstrip()
-            if line[-1] == '|':
-                line = line[:-1]
-            f2.write(line + '\n')
-    os.remove(filename)
-    os.rename("%s.bak" % filename, filename)
-
 def create_dataset(folder_name):
-    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='127.0.0.1',
-                            port=5301)
-
     fail = False
-    cur = conn.cursor()
-    try:
-        cur.execute('DROP SCHEMA public CASCADE;\n\
-                CREATE SCHEMA public;\n\
-                GRANT ALL ON SCHEMA public TO postgres;\n\
-                GRANT ALL ON SCHEMA public TO public;')
-    except:
-        fail = True
+    fail = fail | execute_sql('DROP SCHEMA public CASCADE;\
+                CREATE SCHEMA public;\
+                GRANT ALL ON SCHEMA public TO postgres;\
+                GRANT ALL ON SCHEMA public TO public;', folder_name)
+
+
     path = os.path.join('.', 'data', folder_name)
     path_create = os.path.join(path, 'sql', "{}-create.sql".format("tpch"))
+
     with open(path_create, 'r') as f:
-        sql = ''.join(f.readlines())
-        try:
-            cur.execute(sql)
-        except:
-            fail = True
+        fail = fail | execute_sql(''.join(f.readlines()), folder_name)
         if not fail:
             path_data = os.path.join(path, 'data')
             r_tbl = re.compile('.*\.tbl$')
             for filename in os.listdir(path_data):
                 if r_tbl.search(filename) is not None:
                     file_name = os.path.join(path_data, filename)
-                    preprocess(file_name)
                     tbl_name = filename.split('.')[0]
-                    try:
-                        cur.execute("copy {} from '{}' WITH DELIMITER AS '|';".format(tbl_name, os.path.abspath(file_name)))
-                    except:
-                        fail = True
+                    fail = fail | execute_sql("copy {} from '{}' WITH DELIMITER AS '|';".format(tbl_name, os.path.abspath(file_name)), folder_name)
+
     path_dss = os.path.join(path, 'data', 'dss.ri') # 去掉dss.ri中多主键以及外键相关的内容
     with open(path_dss, 'r') as f:
-        sql = ''.join(f.readlines())
-        try:
-            cur.execute(sql)
-        except:
-            fail = True
-    conn.commit()    
-     # todo
-    cur.close()
-    conn.close()
+        fail = fail | execute_sql(''.join(f.readlines()), folder_name)
+        
     return not fail
 
 def execute_workload(folder_name):
-    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='127.0.0.1',
-                            port=5301)
-
     fail = False
-    cur = conn.cursor()
-    try:
-        cur.execute('CREATE EXTENSION pg_stat_statements;\n\
-                SELECT pg_stat_statements_reset();')
-    except:
-        fail = True
+
+    fail = fail | execute_sql('CREATE EXTENSION pg_stat_statements;\
+                SELECT pg_stat_statements_reset();', folder_name)
+
     path_sql = os.path.join('.', 'data', folder_name, 'sql')
     r_sql = re.compile('^([0-9]*)\.sql')
     for filename in os.listdir(path_sql):
@@ -234,107 +249,38 @@ def execute_workload(folder_name):
                         line = line.strip()
                         sql += line
                         sql += ' '
-                try:
-                    cur.execute(sql)
-                except:
-                    fail = True
+                fail = fail | execute_sql(sql, folder_name)
                                 
-    conn.commit()    
-     # todo
-    cur.close()
-    conn.close()
     return not fail
 
 def top_slow_sql(folder_name):
-    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='127.0.0.1',
-                            port=5301)
+    return fetch_all_sql('SELECT query, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;', folder_name)
 
-    fail = False
-    cur = conn.cursor()
-    res = None
-    try:
-        cur.execute('SELECT query, total_time FROM pg_stat_statements ORDER BY total_time DESC LIMIT 10;')
-    except:
-        fail = True
-    if not fail:
-        res = cur.fetchall()
 
-    conn.commit()    
-     # todo
-    cur.close()
-    conn.close()
-    return res
-
-def info(port, tbl_name):
-    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='127.0.0.1',
-                            port=port)
-    fail = False
+def info(tbl_name, folder_name, port):
     node_info = {}
-    cur = conn.cursor()
+    
     for tbl in tbl_name:
-        try:
-            cur.execute('select count(*) from {};'.format(tbl))
-        except:
-            fail = True
-        if not fail:
-            res = cur.fetchone()
-            node_info[tbl] = res[0]
-
-    conn.commit()    
-     # todo
-    cur.close()
-    conn.close()
+        node_info[tbl] = fetch_one_sql('select count(*) from {};'.format(tbl), folder_name, port)[0]
+  
     return node_info
-
-def commit_num(folder_name):
-    conn = psycopg2.connect(dbname=folder_name, # tpch1x (0.1m, 10m), tpch100m (100m)
-                            user='postgres',
-                            password='postgres',
-                            host='127.0.0.1',
-                            port=5301)
-    fail = False
-    cur = conn.cursor()
-    res = None
-    try:
-        cur.execute('SELECT SUM(xact_commit)FROM pg_stat_database;')
-    except:
-        fail = True
-    if not fail:
-        res = int(cur.fetchone()[0])
-    conn.commit()    
-     # todo
-    cur.close()
-    conn.close()
-    return res
 
 if __name__ == '__main__':
     folder_name = sys.argv[1]
     tbl_name = table_col(folder_name)
     if create_dataset(folder_name):
-        table_info = info(5301, tbl_name)
         partition_ratio = [] # 各结点划分比例
+        table_info = info(tbl_name, folder_name, 5301)
         for i in range(1, 4):
-            node_info = info(5400 + i, tbl_name)
+            node_info = info(tbl_name, folder_name, 5400 + i)
             for tbl in node_info:
                 node_info[tbl] = node_info[tbl] / table_info[tbl]
             partition_ratio.append(node_info)
+        print(partition_ratio)
 
-        num1 = commit_num(folder_name)
-        t1 = time.time()
         if execute_workload(folder_name):
             sql_latency = top_slow_sql(folder_name)
-        num2 = commit_num(folder_name)
-        t2 = time.time()
-        throughput = (num2 - num1) / (t2 - t1)
-        print(partition_ratio)
-        print(sql_latency)
-        print(throughput)
+            print(sql_latency)
         
 
 

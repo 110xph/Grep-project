@@ -34,15 +34,15 @@ http://localhost:3002/
 
 ```
 code
-  │       app.js          # app 入口
-  └───routes           # route controllers
-          │       welcome.js          # home page
-          │       design.js         # database design
+  │       app.js		# app 入口
+  └───routes           		# route controllers
+          │       welcome.js          	# home page
+          │       design.js         	# database design
   └───public/javascripts           # backend
-          │       design.js         # database design  
-  └───views           # rendering
-          │       welcome.jade          # home page
-          │       design.jade         # database design
+          │       design.js         	# database design  
+  └───views           		# rendering
+          │       welcome.jade    	# home page
+          │       design.jade         	# database design
   └───public/data/code           # python
 ```
 
